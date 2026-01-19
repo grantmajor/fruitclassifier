@@ -1,4 +1,4 @@
 import torch
-
-print(f"torch.cuda.is_available(): {torch.cuda.is_available()}")
-print(f"torch.version.cuda: {torch.version.cuda}")
+print(torch.version.cuda)
+print(torch.cuda.is_available())
+print(torch.cuda.get_device_name(0))

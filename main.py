@@ -8,77 +8,6 @@ import torch.optim as optim
 import matplotlib.pyplot as plt
 
 
-# Use GPU if possible
-device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-print(f'Computing device: {device}')
-
-# Data augmentation on training data
-train_transform = transforms.Compose([
-    transforms.Resize((64, 64)),
-    transforms.RandomHorizontalFlip(p=0.5), # simulates different fruit orientations
-    transforms.RandomRotation(10),          # simulates different camera angles
-    transforms.ColorJitter(
-        brightness=0.2,
-        contrast=0.2,
-        saturation=0.2
-    ),                                      # simulates lighting condition variability
-    transforms.ToTensor(),
-    transforms.Normalize(
-        mean=[0.5, 0.5, 0.5],
-        std=[0.5, 0.5, 0.5]
-
-    )
-])
-
-# Transforms on testing data
-test_transform = transforms.Compose([
-    transforms.Resize((64, 64)),
-    transforms.ToTensor(),
-    transforms.Normalize(
-        mean=[0.5, 0.5, 0.5],
-        std=[0.5, 0.5, 0.5]
-    )
-])
-
-batch_size = 16     # batch size set to 16 due to hardware constraints
-num_epochs = 30
-
-trainset = datasets.ImageFolder(
-    root='data/Training',
-    transform=train_transform
-)                   # pull training set and apply transformations
-
-testset = datasets.ImageFolder(
-    root='data/Test',
-    transform=test_transform
-)                   # pull test set and apply transformations
-
-valset = datasets.ImageFolder(
-    root='data/Validation',
-    transform=test_transform
-                    # pull validation set and apply transformations
-)
-
-
-
-train_loader = DataLoader(
-    trainset, batch_size=batch_size,
-    shuffle=True, num_workers=4
-)                   # create dataloader for training set
-
-test_loader = DataLoader(
-    testset, batch_size=batch_size,
-    shuffle=False, num_workers=4
-)                   # create dataloader for test set
-
-val_loader = DataLoader(
-    valset, batch_size=batch_size,
-    shuffle=False, num_workers=4
-)
-images, labels = next(iter(train_loader))
-
-
-
 # Define the CNN
 class FruitCNN(nn.Module):
     def __init__(self, num_classes):
@@ -104,106 +33,172 @@ class FruitCNN(nn.Module):
         x = self.fc2(x)
         return x
 
-# Create model object
-num_classes = len(trainset.classes)
-model = FruitCNN(num_classes).to(device)
-
-# Loss function and optimizer
-criterion = nn.CrossEntropyLoss()
-optimizer = optim.Adam(model.parameters(), lr=0.001)
 
 
-# Network training
+def main():
+    # Use GPU if possible
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    print(f'Computing device: {device}')
 
-# Training metrics
-train_losses, val_losses = [], []
-train_accs, val_accs = [], []
-best_val_acc = 0.0
+    # Data augmentation on training data
+    train_transform = transforms.Compose([
+        transforms.Resize((64, 64)),
+        transforms.RandomHorizontalFlip(p=0.5),  # simulates different fruit orientations
+        transforms.RandomRotation(10),  # simulates different camera angles
+        transforms.ColorJitter(
+            brightness=0.2,
+            contrast=0.2,
+            saturation=0.2
+        ),  # simulates lighting condition variability
+        transforms.ToTensor(),
+        transforms.Normalize(
+            mean=[0.5, 0.5, 0.5],
+            std=[0.5, 0.5, 0.5]
 
-for epoch in range(num_epochs):
-    model.train() # Not needed until dropout or batchnorm layers are used
-    running_loss, correct, total = 0.0, 0, 0
+        )
+    ])
 
-    for i, data in enumerate(train_loader, 0):
-        optimizer.zero_grad()
-        inputs, labels = data
+    # Transforms on testing data
+    test_transform = transforms.Compose([
+        transforms.Resize((64, 64)),
+        transforms.ToTensor(),
+        transforms.Normalize(
+            mean=[0.5, 0.5, 0.5],
+            std=[0.5, 0.5, 0.5]
+        )
+    ])
 
-        # Forward pass, backward pass, optimization
-        inputs = inputs.to(device)
-        labels = labels.to(device)
-        outputs = model(inputs)
-        loss = criterion(outputs, labels)
-        loss.backward()
-        optimizer.step()
+    trainset = datasets.ImageFolder(
+        root='data/Training',
+        transform=train_transform
+    )  # pull training set and apply transformations
+
+    testset = datasets.ImageFolder(
+        root='data/Test',
+        transform=test_transform
+    )  # pull test set and apply transformations
+
+    valset = datasets.ImageFolder(
+        root='data/Validation',
+        transform=test_transform
+        # pull validation set and apply transformations
+    )
 
 
-        # Print metrics
-        running_loss += loss.item() * labels.size(0)
-        _, preds = torch.max(outputs, 1)
-        correct += (preds == labels).sum().item()
-        total += labels.size(0)
+    batch_size = 64
+    train_loader = DataLoader(
+        trainset, batch_size=batch_size,
+        shuffle=True, num_workers=8,
+        pin_memory=True
+    )  # create dataloader for training set
+
+    test_loader = DataLoader(
+        testset, batch_size=batch_size,
+        shuffle=False, num_workers=8
+    )  # create dataloader for test set
+
+    val_loader = DataLoader(
+        valset, batch_size=batch_size,
+        shuffle=False, num_workers=8
+    )
+
+    # Create model object
+    num_classes = len(trainset.classes)
+    model = FruitCNN(num_classes).to(device)
+
+    # Loss function and optimizer
+    criterion = nn.CrossEntropyLoss()
+    optimizer = optim.Adam(model.parameters(), lr=0.001)
+
+    # Training metrics
+    num_epochs = 12
+    best_val_acc = 0.0
+    train_losses, val_losses = [], []
+    train_accs, val_accs = [], []
 
 
-    train_loss = running_loss / total
-    train_acc = correct / total
+    for epoch in range(num_epochs):
+        model.train() # Not needed until dropout or batchnorm layers are used
+        running_loss, correct, total = 0.0, 0, 0
 
-    # Model validation
-    model.eval() # Not needed unless dropout or batchnorm layers are used
-    running_loss, correct, total = 0.0, 0, 0
-
-    with torch.no_grad():
-        for inputs, labels in val_loader:
+        for inputs, labels in train_loader:
             inputs = inputs.to(device)
             labels = labels.to(device)
+            optimizer.zero_grad()
             outputs = model(inputs)
             loss = criterion(outputs, labels)
+            loss.backward()
+            optimizer.step()
 
+            # Calculate metrics
             running_loss += loss.item() * labels.size(0)
             _, preds = torch.max(outputs, 1)
             correct += (preds == labels).sum().item()
             total += labels.size(0)
 
-    val_loss = running_loss / total
-    val_acc = correct / total
 
-    # Store metrics
-    train_losses.append(train_loss)
-    val_losses.append(val_loss)
-    train_accs.append(train_acc)
-    val_accs.append(val_acc)
+        train_loss = running_loss / total
+        train_acc = correct / total
 
-    print(f"Epoch [{epoch+1}/{num_epochs}]"
-          f"Train Loss: {train_loss:.4f}, Train Acc: {train_acc:.4f} | "
-          f"Val Loss: {val_loss:.4f}, Val Acc: {val_acc:.4f}")
+        # Model validation
+        model.eval() # Not needed unless dropout or batchnorm layers are used
+        running_loss, correct, total = 0.0, 0, 0
 
-    # Save model
-    if val_acc > best_val_acc:
-        best_val_acc = val_acc
-        torch.save({
-            'model_state_dict': model.state_dict(),
-            'optimizer_state_dict': optimizer.state_dict(),
-            'epoch': epoch
-        }, 'model.pth')
+        with torch.no_grad():
+            for inputs, labels in val_loader:
+                inputs = inputs.to(device)
+                labels = labels.to(device)
+                outputs = model(inputs)
+                loss = criterion(outputs, labels)
 
-# Visualize NN Metrics
+                running_loss += loss.item() * labels.size(0)
+                _, preds = torch.max(outputs, 1)
+                correct += (preds == labels).sum().item()
+                total += labels.size(0)
 
-# Loss visualization
-epochs = range(1, num_epochs+1)
-plt.figure()
-plt.plot(epochs, train_losses, label="Train Loss")
-plt.plot(epochs, val_losses, label="Val Loss")
-plt.xlabel("Epochs")
-plt.ylabel("Loss")
-plt.legend()
-plt.show()
+        val_loss = running_loss / total
+        val_acc = correct / total
 
-# Accuracy visualization
-plt.figure()
-plt.plot(epochs, train_accs, label="Train Acc")
-plt.plot(epochs, val_accs, label="Val Acc")
-plt.xlabel("Epochs")
-plt.ylabel("Accuracy")
-plt.legend()
-plt.show()
+        # Store metrics
+        train_losses.append(train_loss)
+        val_losses.append(val_loss)
+        train_accs.append(train_acc)
+        val_accs.append(val_acc)
+
+        print(f"Epoch [{epoch+1}/{num_epochs}]"
+              f"Train Loss: {train_loss:.4f}, Train Acc: {train_acc:.4f} | "
+              f"Val Loss: {val_loss:.4f}, Val Acc: {val_acc:.4f}")
+
+        # Save model
+        if val_acc > best_val_acc:
+            best_val_acc = val_acc
+            torch.save({
+                'model_state_dict': model.state_dict(),
+                'optimizer_state_dict': optimizer.state_dict(),
+                'epoch': epoch
+            }, 'model.pth')
+
+    # Visualize NN Metrics
+
+    # Loss visualization
+    epochs = range(1, num_epochs+1)
+    plt.figure()
+    plt.plot(epochs, train_losses, label="Train Loss")
+    plt.plot(epochs, val_losses, label="Val Loss")
+    plt.xlabel("Epochs")
+    plt.ylabel("Loss")
+    plt.legend()
+    plt.show()
+
+    # Accuracy visualization
+    plt.figure()
+    plt.plot(epochs, train_accs, label="Train Acc")
+    plt.plot(epochs, val_accs, label="Val Acc")
+    plt.xlabel("Epochs")
+    plt.ylabel("Accuracy")
+    plt.legend()
+    plt.show()
 
 
+if __name__ == "__main__":
+    main()
