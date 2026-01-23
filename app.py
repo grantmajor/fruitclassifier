@@ -53,7 +53,7 @@ model.eval()
 # Use same transforms as test_transform from training.py
 transform = transforms.Compose([
     transforms.Resize((64, 64)),
-    transforms.toTensor(),
+    transforms.ToTensor(),
     transforms.Normalize(
         mean=[0.5, 0.5, 0.5],
         std=[0.5, 0.5, 0.5]

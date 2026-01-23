@@ -21,6 +21,9 @@ class FruitCNN(nn.Module):
         # Pooling layer
         self.pool = nn.MaxPool2d(2, 2)
 
+        # Dropout layer
+        self.dropout = nn.Dropout(0.25)
+
         self.fc1 = nn.Linear(128 * 8 * 8, 256)
         self.fc2 = nn.Linear(256, num_classes)
 
@@ -30,6 +33,7 @@ class FruitCNN(nn.Module):
         x = self.pool(F.relu(self.conv3(x)))
         x = torch.flatten(x, 1)
         x = F.relu(self.fc1(x))
+        x = self.dropout(x)
         x = self.fc2(x)
         return x
 
@@ -38,6 +42,8 @@ class FruitCNN(nn.Module):
 def main():
     # Use GPU if possible
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    torch.backends.cudnn.benchmark = True
+
     print(f'Computing device: {device}')
 
     # Data augmentation on training data
@@ -88,18 +94,18 @@ def main():
     batch_size = 64
     train_loader = DataLoader(
         trainset, batch_size=batch_size,
-        shuffle=True, num_workers=8,
+        shuffle=True, num_workers=6,
         pin_memory=True
     )  # create dataloader for training set
 
     test_loader = DataLoader(
         testset, batch_size=batch_size,
-        shuffle=False, num_workers=8
+        shuffle=False, num_workers=6
     )  # create dataloader for test set
 
     val_loader = DataLoader(
         valset, batch_size=batch_size,
-        shuffle=False, num_workers=8
+        shuffle=False, num_workers=6
     )
 
     # Create model object
@@ -116,14 +122,17 @@ def main():
     train_losses, val_losses = [], []
     train_accs, val_accs = [], []
 
-
+    patience = 4
+    epoch_no_improve = 0
     for epoch in range(num_epochs):
         model.train() # Not needed until dropout or batchnorm layers are used
         running_loss, correct, total = 0.0, 0, 0
 
+
+
         for inputs, labels in train_loader:
-            inputs = inputs.to(device)
-            labels = labels.to(device)
+            inputs = inputs.to(device, non_blocking=True)
+            labels = labels.to(device, non_blocking=True)
             optimizer.zero_grad()
             outputs = model(inputs)
             loss = criterion(outputs, labels)
@@ -174,14 +183,21 @@ def main():
             best_val_acc = val_acc
             torch.save({
                 'model_state_dict': model.state_dict(),
-                'optimizer_state_dict': optimizer.state_dict(),
-                'epoch': epoch
+                'classes': trainset.classes,
+                'epoch': epoch,
+                'val_acc': val_acc
             }, 'model.pth')
+        else:
+            epoch_no_improve += 1
+
+        if epoch_no_improve >= patience:
+            print("Patience limit reached, training stopped.")
+            break
 
     # Visualize NN Metrics
 
     # Loss visualization
-    epochs = range(1, num_epochs+1)
+    epochs = range(1, len(num_epochs)+1)
     plt.figure()
     plt.plot(epochs, train_losses, label="Train Loss")
     plt.plot(epochs, val_losses, label="Val Loss")
