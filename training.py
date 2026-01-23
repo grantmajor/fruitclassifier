@@ -186,7 +186,7 @@ def main():
                 'classes': trainset.classes,
                 'epoch': epoch,
                 'val_acc': val_acc
-            }, 'model.pth')
+            }, 'model/model.pth')
         else:
             epoch_no_improve += 1
 
