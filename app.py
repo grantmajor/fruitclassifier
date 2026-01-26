@@ -6,7 +6,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torchvision.transforms as transforms
 import os
-from flask import Flask, request, jsonify, flash, redirect, url_for, Response
+from flask import Flask, request, jsonify, flash, redirect, url_for, Response, render_template
 from werkzeug.utils import secure_filename
 from PIL import Image
 import io
@@ -44,11 +44,10 @@ device = torch.device("cpu")
 # Get checkpoint of saved model
 checkpoint = torch.load("model/model.pth", map_location = device)
 
-# Get class names
-CLASSES = checkpoint['classes']
-
+#TODO: Get class count from the model checkpoint
+NUM_CLASSES = 131
 # Load saved model using number of classes saved in model checkpoint
-model = FruitCNN(num_classes=len(CLASSES)).to(device)
+model = FruitCNN(num_classes=NUM_CLASSES).to(device)
 model.load_state_dict(checkpoint["model_state_dict"])
 model.eval()
 
@@ -99,7 +98,41 @@ def allowed_file(filename) -> tuple[Response, int] | bool:
 
 
 
-@app.route("/predict", methods=["POST"])
+#TODO: Link real model data to model_info. Using fake data now.
+MODEL_INFO = {
+    "num_classes": NUM_CLASSES,
+    "classes": NUM_CLASSES,
+    "val_acc": checkpoint.get("val_acc"),
+    "epoch": checkpoint.get("epoch"),
+    "architecture": "FruitCNN",
+    "input_size": 64
+}
+
+"""
+Gets json with relevant model information
+
+return: json file that stores model training information and metrics
+"""
+@app.route("/model_info", methods=["GET"])
+def model_info():
+    return jsonify(MODEL_INFO)
+
+
+@app.route("/")
+def home():
+    return render_template("index.html")
+
+
+
+@app.route("/predict_ui", methods=["POST"])
+def predict_ui():
+    return render_template("predict.html")
+
+"""
+Takes user uploaded image and returns the model's predicted class in a json
+
+returns: json file with model prediction and confidence
+"""
 def predict():
     if request.method =='POST':
         if 'file' not in request.files:
@@ -119,23 +152,14 @@ def predict():
             prob = torch.softmax(output, dim=1)
             confidence, pred = torch.max(prob, dim=1)
         return jsonify({
-            "prediction": CLASSES[pred.item()],
+            # TODO: Add real prediction when classes are synced  CLASSES[pred.item()],
+            "prediction": NUM_CLASSES,
             "confidence": float(confidence.item())
         })
 
-    file = request.files["file"]
-    image = Image.open(file).convert("RGB")
-    image = transform(image).unsqueeze(0)
-
-    with torch.no_grad():
-        outputs = model(image)
-        probs = torch.softmax(outputs, dim=1)
-        confidence, pred_idx = torch.max(probs,1)
-
-    return jsonify({
-        "class": CLASSES[pred_idx.item()],
-        "confidence": round(confidence.item(),4)
-    })
+@app.route("/metrics")
+def metrics():
+    return render_template("metrics.html", info=MODEL_INFO)
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000)
