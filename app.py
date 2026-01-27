@@ -77,7 +77,7 @@ Verifies if a file is a supported image format
 
 param: filename: name of the file that is being verified
 returns: boolean value stating if the file is a valid format
-raises:  BadRequest: If the file format is not valid
+raises: BadRequest: If the file format is not valid
 """
 def allowed_file(filename) -> tuple[Response, int] | bool:
 
