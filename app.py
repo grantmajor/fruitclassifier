@@ -1,12 +1,15 @@
 import json
+from typing import Tuple
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torchvision.transforms as transforms
-from flask import Flask, request, jsonify
+import os
+from flask import Flask, request, jsonify, flash, redirect, url_for, Response
+from werkzeug.utils import secure_filename
 from PIL import Image
-
-#TODO: Check the classes.json, it was saved separate from training
+import io
 
 # CNN from training.py
 class FruitCNN(nn.Module):
@@ -37,15 +40,15 @@ class FruitCNN(nn.Module):
 app = Flask(__name__)
 device = torch.device("cpu")
 
-# Pull classes from .json
-with open("model/classes.json") as f:
-    CLASSES = json.load(f)
 
-num_classes = len(CLASSES)
-
-# Load saved model
-model = FruitCNN(num_classes)
+# Get checkpoint of saved model
 checkpoint = torch.load("model/model.pth", map_location = device)
+
+# Get class names
+CLASSES = checkpoint['classes']
+
+# Load saved model using number of classes saved in model checkpoint
+model = FruitCNN(num_classes=len(CLASSES)).to(device)
 model.load_state_dict(checkpoint["model_state_dict"])
 model.eval()
 
@@ -60,14 +63,65 @@ transform = transforms.Compose([
     )
 ])
 
+
+
 @app.route("/health", methods=["GET"])
 def health():
     return {"status": "ok"}
 
+ALLOWED_EXTENSIONS = {'jpeg', 'jpg', 'png'}
+
+
+"""
+Verifies if a file is a supported image format
+
+param: filename: name of the file that is being verified
+returns: boolean value stating if the file is a valid format
+raises: BadRequest: If the file format is not valid
+"""
+def allowed_file(filename) -> tuple[Response, int] | bool:
+
+    # Check for corrupted files
+    try:
+        img = Image.open(filename)
+        img.verify()
+    except Exception:
+        return jsonify({"error": "Invalid image file"}), 400
+
+    # CHeck for wrong filetype
+    if not filename.mimetype.startswith('image/'):
+        return jsonify({"error": "Uploaded file is not an image"}), 400
+
+
+    # Return validity of file
+    return '.' in filename and \
+            filename.rsplit('.',1)[1].lower() in ALLOWED_EXTENSIONS
+
+
+
 @app.route("/predict", methods=["POST"])
 def predict():
-    if "file" not in request.files:
-        return jsonify({"error": "No Image Provided"}), 400
+    if request.method =='POST':
+        if 'file' not in request.files:
+            return jsonify({"error": "No file uploaded"}), 400
+        file = request.files['file']
+
+        if file.filename == '':
+            return jsonify({"error": "No selected file"}), 400
+        if not file.mimetype.startswith("image/"):
+            return jsonify({"error": "Invalid image type"}), 400
+        image = Image.open(io.BytesIO(file.read())).convert("RGB")
+        input_tensor = transform(image).unsqueeze(0)
+
+        model.eval()
+        with torch.no_grad():
+            output = model(input_tensor)
+            prob = torch.softmax(output, dim=1)
+            confidence, pred = torch.max(prob, dim=1)
+        return jsonify({
+            "prediction": CLASSES[pred.item()],
+            "confidence": float(confidence.item())
+        })
 
     file = request.files["file"]
     image = Image.open(file).convert("RGB")
