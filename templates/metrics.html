@@ -1,3 +1,5 @@
+<link rel="stylesheet" href="styles.css"
+
 <h2> Model Information</h2>
 
 <ul>
@@ -6,3 +8,19 @@
     <li>Validation Accuracy: {{ info.val_acc }}</li>
     <li>Classes: {{ info.num_classes }}</li>
 </ul>
+
+<h2>Model Metrics</h2>
+
+<!-- Use figure container to display graphs side by side  -->
+<div class="figure-container">
+    <figure>
+        <img src="{{ url_for('static', filename='metrics/plots/accuracy_curve.png') }}" alt="Accuracy Curve" width="600" height="400">
+        <figcaption>Accuracy Curve</figcaption>
+    </figure>
+
+    <figure>
+        <img src ="{{ url_for('static', filename='metrics/plots/loss_curve.png') }}" alt ="Loss Curve" width="600" height="400">
+        <figcaption>Loss Curve</figcaption>
+    </figure>
+</div>
+

@@ -110,7 +110,6 @@ def allowed_file(file) -> tuple[Response, int] | bool:
 
 
 
-#TODO: Link real model data to model_info. Using fake data now.
 MODEL_INFO = {
     "num_classes": NUM_CLASSES,
     "classes": checkpoint.get('classes'),

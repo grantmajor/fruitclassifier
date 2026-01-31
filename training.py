@@ -76,7 +76,7 @@ def main():
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     torch.backends.cudnn.benchmark = True
     print(f'Computing device: {device}')
-    METRICS_DIR = "metrics"
+    METRICS_DIR = "static/metrics"
     os.makedirs(METRICS_DIR, exist_ok=True)
 
     PLOTS_DIR = os.path.join(METRICS_DIR, 'plots')
