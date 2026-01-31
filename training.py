@@ -36,25 +36,39 @@ class FruitCNN(nn.Module):
             nn.BatchNorm2d(128),
             nn.ReLU(inplace=True)
         )
+        self.conv4 = nn.Sequential(
+            nn.Conv2d(128, 256, 3, padding=1),
+            nn.BatchNorm2d(256),
+            nn.ReLU(inplace=True)
+        )
+        self.conv5 = nn.Sequential(
+            nn.Conv2d(256, 512, 3, padding=1),
+            nn.BatchNorm2d(512),
+            nn.ReLU(inplace=True)
+        )
 
         # Pooling layer
         self.pool = nn.MaxPool2d(2, 2)
 
         # Dropout layer
         self.dropout = nn.Dropout(0.25)
+        self.fc_dropout = nn.Dropout(0.5)
 
         # We use Adaptive pooling to lower output size
         self.gap = nn.AdaptiveAvgPool2d(1)
 
-        self.fc2 = nn.Linear(128, num_classes)
+        self.fc2 = nn.Linear(512, num_classes)
 
     def forward(self, x):
         x = self.pool(self.conv1(x))
         x = self.pool(self.conv2(x))
         x = self.pool(self.conv3(x))
+        x = self.pool(self.conv4(x))
+        x = self.pool(self.conv5(x))
         x = self.dropout(x)
         x = self.gap(x)
         x = x.view(x.size(0), -1)
+        x = self.fc_dropout(x)
         x = self.fc2(x)
         return x
 
@@ -127,8 +141,7 @@ def main():
     valset = datasets.ImageFolder(
         root='data/Validation',
         transform=test_transform
-        # pull validation set and apply transformations
-    )
+    )  # pull validation set and apply transformations
 
 
     batch_size = 64
@@ -201,7 +214,7 @@ def main():
         # Model validation
         model.eval()
 
-        running_loss, topk_correct = 0.0, 0.0
+        running_loss = 0.0
         correct, total = 0, 0
         with torch.no_grad():
             for inputs, labels in val_loader:
@@ -214,14 +227,12 @@ def main():
                 correct += (preds == labels).sum().item()
 
                 # Top-K accuracy
-                _, top_k = outputs.topk(5, dim=1)
-                topk_correct += top_k.eq(labels.view(-1, 1)).any(dim=1).sum().item()
-                total += labels.size(0)
+                val_topk += top_k_accuracy(outputs, labels, k=5) * labels.size(0)
 
 
         val_loss = running_loss / total
         val_acc = correct / total
-        val_topk = topk_correct / total
+        val_topk /= total
 
         # Store metrics
         train_losses.append(train_loss)
@@ -390,7 +401,7 @@ def main():
     plt.legend()
     plt.tight_layout()
     plt.savefig(
-        os.path.join(TABLES_DIR, "accuracy_curve.png"),
+        os.path.join(PLOTS_DIR, "accuracy_curve.png"),
         dpi=300
     )
     plt.close()
