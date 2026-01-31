@@ -311,17 +311,17 @@ def main():
 
         # Compute macro F1
         macro_f1 = f1_score(all_labels, all_preds, average='macro')
-        #TODO: Save all metrics to disk
 
 
     num_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
     train_summary = {
-        "best_epoch": best_epoch,
-        "best_val_acc": best_val_acc,
-        "macro_f1": macro_f1,
-        "num_parameters": num_params,
-        "total_training_time_sec": round(total_time, 2),
-        "avg_epoch_time_sec": round(avg_epoch_time, 2)
+        "Total Epochs": len(train_losses),
+        "Best Epoch": best_epoch,
+        "Best Validation Accuracy": best_val_acc,
+        "Macro-F1": macro_f1,
+        "Number of Parameters": num_params,
+        "Total Training Time (seconds)": round(total_time, 2),
+        "Training Time per Epoch (seconds)": round(avg_epoch_time, 2)
     }
 
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")

@@ -1,8 +1,0 @@
-{
-    "best_epoch": 8,
-    "best_val_acc": 0.9910529331394068,
-    "macro_f1": 0.991927594887417,
-    "num_parameters": 110337,
-    "total_training_time_sec": 1487.71,
-    "avg_epoch_time_sec": 123.98
-}

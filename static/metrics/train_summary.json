@@ -1,0 +1,8 @@
+{
+    "Best Epoch": 8,
+    "Best Validation Accuracy": 0.9910529331394068,
+    "Macro-F1": 0.991927594887417,
+    "Number of Parameters": 110337,
+    "Total Training Time (seconds)": 1487.71,
+    "Training Time per Epoch (seconds)": 123.98
+}

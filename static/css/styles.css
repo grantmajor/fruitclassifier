@@ -1,14 +1,46 @@
+/* Gap between figures, centers figures, aligns top of figures, 20px vertical space gap */
 .figure-container {
     display: flex;
     gap: 10px;
-    justify-content: space-between;
+    justify-content: center;
+    align-items: flex-start;
+    margin-top: 20px;
 }
 
+/* Stacks and centers figure's children */
 .figure-container figure {
-    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
 }
 
+/* centers, bolds, and adds 8px margin to figure caption */
 figcaption {
     font-weight: bold;
     text-align: center;
+    margin-bottom: 8px;
+}
+
+/* Centers text inside figures */
+figure, h2 { 
+    text-align:center;
+}
+
+/* single line table borders, centers table horizontally inside parent */
+table {
+    border-collapse: collapse;
+    margin: 0 auto;
+}
+
+/* Adds black 1px border to cells, 6px, 10px vertical and horizontal padding, centers cell's text */
+th, td{
+    border: 1px solid black;
+    padding: 6px 10px;
+    text-align: center;
+}
+
+
+/* bolds header cells */
+th { 
+    font-weight: bold;
 }

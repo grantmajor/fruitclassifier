@@ -1,8 +1,11 @@
 <!-- Import css file for side-by-side graph display -->
 <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.3/jquery.min.js"></script>   
+<script src="https://cdn.jsdelivr.net/npm/papaparse@5.3.2/papaparse.min.js"></script>   
 
 
-<h1>Model Information</h1>
+<h1>Training Summary</h1>
+<div id="myData"></div>
 
 <ul>
     <li>Architecture: {{ info.architecture }}</li>
@@ -26,3 +29,126 @@
     </figure>
 </div>
 
+
+
+<!-- Model metrics from csv-->
+<script>
+
+function CSVToTable(csvURL, tableId) 
+{
+    Papa.parse(csvURL,
+        {
+            download: true,
+            header: true,
+            skipEmptyLines: true,
+            complete: function(results) {
+                const table = document.getElementById(tableId);
+                table.innerHTML ="";
+
+                const thead = table.createTHead();
+                const headerRow = thead.insertRow();
+                results.meta.fields.forEach(field => {
+                    const th = document.createElement("th");
+                    th.textContent = field;
+                    headerRow.appendChild(th);
+
+                });
+
+                const tbody = table.createTBody();
+                results.data.forEach(row => {
+                    const tr = tbody.insertRow();
+                    Object.values(row).forEach(cell => {
+                        const td = tr.insertCell();
+                        
+                        //round numbers to 4 decimal places
+                        if(!isNaN(cell)) {
+                        td.textContent = Number(cell).toFixed(4);
+                    }
+                    else {
+                        td.textContent = cell;
+                    }
+                    });
+
+                });
+            }
+        });
+
+}
+</script>
+
+<div class="figure-container">
+    <figure>
+        <figcaption>Accuracy by Class</figcaption>
+        <table id="class_acc"></table>
+    </figure>
+
+    <figure>
+        <figcaption>Training Metrics</figcaption>
+        <table id ="train_metrics"></table>
+    </figure>
+
+
+</div>
+
+<script>
+    CSVToTable(
+        "{{  url_for('static', filename='metrics/tables/per_class_accuracy.csv')  }}", 
+        "class_acc"
+);
+
+
+    CSVToTable(
+        "{{  url_for('static', filename='metrics/tables/training_metrics.csv')  }}",
+        "train_metrics"
+    );
+</script>
+
+
+<script>
+    function GetJson(jsonURL)
+    {
+        fetch(jsonURL)
+        .then(function (response) {
+            return response.json();
+        })
+        .then(function (data) {
+            appendData(data);
+        })
+        .catch(function (err){ 
+            console.log(err);
+
+        });
+    }
+</script>
+
+<script>
+    function appendData(data) {
+        var mainContainer = document.getElementById("myData");
+
+        if(Array.isArray(data)) 
+        {
+            data.forEach(item => 
+            {
+                var div = document.createElement("div");
+                div.textContent = JSON.stringify(item, null, 2);
+                mainContainer.appendChild(div);
+            });
+        }
+        else 
+        {
+            for (const key in data)
+            {
+                if(data.hasOwnProperty(key))
+                {
+                    var div = document.createElement("div");
+                    div.textContent = key + ": " + data[key];
+                    mainContainer.appendChild(div);
+                }
+            }
+        }
+    }
+</script>
+
+<script>
+    GetJson("{{ url_for('static', filename='metrics/train_summary.json')  }}");
+</script>
