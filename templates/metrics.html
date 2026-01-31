@@ -1,6 +1,8 @@
-<link rel="stylesheet" href="styles.css"
+<!-- Import css file for side-by-side graph display -->
+<link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
 
-<h2> Model Information</h2>
+
+<h1>Model Information</h1>
 
 <ul>
     <li>Architecture: {{ info.architecture }}</li>
@@ -9,18 +11,18 @@
     <li>Classes: {{ info.num_classes }}</li>
 </ul>
 
-<h2>Model Metrics</h2>
+<h1>Model Metrics</h1>
 
-<!-- Use figure container to display graphs side by side  -->
+<!-- Use figure container to display graphs side-by-side  -->
 <div class="figure-container">
     <figure>
-        <img src="{{ url_for('static', filename='metrics/plots/accuracy_curve.png') }}" alt="Accuracy Curve" width="600" height="400">
         <figcaption>Accuracy Curve</figcaption>
+        <img src="{{ url_for('static', filename='metrics/plots/accuracy_curve.png') }}" alt="Accuracy Curve" width="500" height="400">
     </figure>
 
     <figure>
-        <img src ="{{ url_for('static', filename='metrics/plots/loss_curve.png') }}" alt ="Loss Curve" width="600" height="400">
         <figcaption>Loss Curve</figcaption>
+        <img src ="{{ url_for('static', filename='metrics/plots/loss_curve.png') }}" alt ="Loss Curve" width="500" height="400">
     </figure>
 </div>
 

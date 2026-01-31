@@ -1,0 +1,14 @@
+.figure-container {
+    display: flex;
+    gap: 10px;
+    justify-content: space-between;
+}
+
+.figure-container figure {
+    flex: 1;
+}
+
+figcaption {
+    font-weight: bold;
+    text-align: center;
+}
