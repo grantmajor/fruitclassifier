@@ -110,7 +110,6 @@ def allowed_file(file) -> tuple[Response, int] | bool:
 
 
 
-#TODO: Link real model data to model_info. Using fake data now.
 MODEL_INFO = {
     "num_classes": NUM_CLASSES,
     "classes": checkpoint.get('classes'),
@@ -186,4 +185,4 @@ def metrics():
     return render_template("metrics.html", info=MODEL_INFO)
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000)
+    app.run(host="0.0.0.0", port=5000, debug=True)
