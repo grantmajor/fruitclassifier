@@ -1,9 +1,0 @@
-{
-    "Total Epochs": 50,
-    "Best Epoch": 47,
-    "Best Validation Accuracy": 1.0,
-    "Macro-F1": 1.0,
-    "Number of Parameters": 1636737,
-    "Total Training Time (seconds)": 6133.91,
-    "Training Time per Epoch (seconds)": 122.68
-}

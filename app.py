@@ -10,49 +10,7 @@ from flask import Flask, request, jsonify, flash, redirect, url_for, Response, r
 from werkzeug.utils import secure_filename
 from PIL import Image
 import io
-
-# CNN from training.py
-class FruitCNN(nn.Module):
-    def __init__(self, num_classes):
-        super().__init__()
-
-        # Convolution layers
-        self.conv1 = nn.Sequential(
-            nn.Conv2d(3, 32, 3, padding=1),
-            nn.BatchNorm2d(32),
-            nn.ReLU(inplace=True)
-        )
-        self.conv2 = nn.Sequential(
-            nn.Conv2d(32, 64, 3, padding=1),
-            nn.BatchNorm2d(64),
-            nn.ReLU(inplace=True)
-        )
-        self.conv3 = nn.Sequential(
-            nn.Conv2d(64, 128, 3, padding=1),
-            nn.BatchNorm2d(128),
-            nn.ReLU(inplace=True)
-        )
-
-        # Pooling layer
-        self.pool = nn.MaxPool2d(2, 2)
-
-        # Dropout layer
-        self.dropout = nn.Dropout(0.25)
-
-        # We use Adaptive pooling to lower output size
-        self.gap = nn.AdaptiveAvgPool2d(1)
-
-        self.fc2 = nn.Linear(128, num_classes)
-
-    def forward(self, x):
-        x = self.pool(self.conv1(x))
-        x = self.pool(self.conv2(x))
-        x = self.pool(self.conv3(x))
-        x = self.dropout(x)
-        x = self.gap(x)
-        x = x.view(x.size(0), -1)
-        x = self.fc2(x)
-        return x
+from training import FruitCNN
 
 # Setting up Flask
 app = Flask(__name__)
@@ -95,19 +53,14 @@ param: filename: name of the file that is being verified
 returns: boolean value stating if the file is a valid format
 raises: BadRequest: If the file format is not valid
 """
-def allowed_file(file) -> tuple[Response, int] | bool:
+def allowed_file(file) -> bool:
+    return '.' in file.filename and file.filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
-    # Check for corrupted files
+    file_bytes = file.read()
     try:
-        img = Image.open(file.stream)
-        img.verify()
-    except Exception:
-        return jsonify({"error": "Invalid image file"}), 400
-
-    # Return validity of file
-    return '.' in file.filename and \
-            file.filename.rsplit('.',1)[1].lower() in ALLOWED_EXTENSIONS
-
+        image = Image.open(io.BytesIO(file_bytes)).convert("RGB")
+    except Exception as e:
+        return jsonify({"error": "Cannot Process image", "details": str(e)}), 400
 
 
 MODEL_INFO = {
@@ -116,7 +69,8 @@ MODEL_INFO = {
     "val_acc": checkpoint.get("val_acc"),
     "epoch": checkpoint.get("epoch"),
     "architecture": "FruitCNN",
-    "input_size": 64
+    "input_size": 64,
+    "dataset": "Fruits-360 64x64"
 }
 
 """

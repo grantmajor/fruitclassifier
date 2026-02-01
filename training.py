@@ -15,6 +15,7 @@ from sklearn.metrics import confusion_matrix, f1_score
 from collections import defaultdict
 from datetime import datetime
 
+
 # Define the CNN
 class FruitCNN(nn.Module):
     def __init__(self, num_classes):
