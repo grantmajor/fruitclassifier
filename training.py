@@ -170,8 +170,8 @@ def main():
     optimizer = optim.AdamW(model.parameters(), lr=0.001)
 
     # Training metrics
-    num_epochs = 30
-    best_val_acc = 0.0
+    num_epochs = 50
+    best_val_acc, best_val_loss = 0.0, float('inf')
     train_losses, val_losses = [], []
     train_accs, val_accs = [], []
     top_k_accs = []
@@ -179,9 +179,10 @@ def main():
     # Scheduler to hasten convergence (hopefully)
     scheduler = CosineAnnealingLR(optimizer, T_max = num_epochs)
 
-    # 4 consecutive epochs without improvement stops training
-    patience = 4
+    # 6 consecutive epochs without improvement stops training
+    patience = 6
     epoch_no_improve = 0
+    eps  = 1e-6 #threshold used for fine-point floating point operations
 
     # Time training
     start_time = time.time()
@@ -208,14 +209,18 @@ def main():
             total += labels.size(0)
         scheduler.step()
 
+
         train_loss = running_loss / total
         train_acc = correct / total
 
         # Model validation
         model.eval()
 
-        running_loss = 0.0
+        running_loss, val_topk = 0.0, 0.0
         correct, total = 0, 0
+        if len(val_loader.dataset) == 0:
+            raise RuntimeError("Validation dataset is empty! Check folder paths and contents.")
+
         with torch.no_grad():
             for inputs, labels in val_loader:
                 inputs = inputs.to(device)
@@ -228,6 +233,8 @@ def main():
 
                 # Top-K accuracy
                 val_topk += top_k_accuracy(outputs, labels, k=5) * labels.size(0)
+
+                total += labels.size(0)
 
 
         val_loss = running_loss / total
@@ -249,12 +256,15 @@ def main():
               f"Val Loss: {val_loss:.4f}, Val Acc: {val_acc:.4f} | "
               f"Val Top-K: {val_topk:.4f}")
 
-        # Save model
-        if val_acc > best_val_acc:
+        # Save model, we use an epsilon variable to handle floating point errors at small scales
+        if (val_acc > best_val_acc + eps) or (val_loss - best_val_loss <= eps and val_loss +eps < best_val_loss):
             best_val_acc = val_acc
+            best_val_loss = val_loss
             best_epoch = epoch+1
             torch.save({
                 'model_state_dict': model.state_dict(),
+                'optimizer_state_dict': optimizer.state_dict(),
+                'scheduler_state_dict': scheduler.state_dict(),
                 'classes': trainset.classes,
                 'epoch': epoch,
                 'val_acc': val_acc
