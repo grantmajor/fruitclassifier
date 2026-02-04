@@ -1,40 +1,42 @@
-<!-- Import css file for side-by-side graph display -->
+
 <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.3/jquery.min.js"></script>   
 <script src="https://cdn.jsdelivr.net/npm/papaparse@5.3.2/papaparse.min.js"></script>   
 
 
 <div class="section-card">
-    <h1>Training Summary</h1>
+    <h1>Model Metrics</h1>
+        <a href="/">Home</a> 
+    <a href="/predict_ui">Make Prediction</a> 
+    <a href="https://github.com/grantmajor/fruitclassifier", target="_blank">Link to GitHub Repository</a>
+</div>
+
+<div class="section-card">
+    <h2 style="text-align: left">Training Summary</h2>
     <div id="myData"></div>
-
-    <ul>
-        <li>Architecture: {{ info.architecture }}</li>
-        <li>Dataset: {{ info.dataset }}</li>
-        <li>Epochs Trained: {{ info.epoch }}</li>
-        <li>Classes: {{ info.num_classes }}</li>
-    </ul>
-</div>
-<h1>Model Metrics</h1>
-
-<!-- Use figure container to display graphs side-by-side  -->
-<div class="figure-container">
-    <figure>
-        <figcaption>Accuracy Curve</figcaption>
-        <img src="{{ url_for('static', filename='metrics/plots/accuracy_curve.png') }}" alt="Accuracy Curve" width="500" height="400">
-    </figure>
-
-    <figure>
-        <figcaption>Loss Curve</figcaption>
-        <img src ="{{ url_for('static', filename='metrics/plots/loss_curve.png') }}" alt ="Loss Curve" width="500" height="400">
-    </figure>
 </div>
 
+
+<div class="section-card">
+<h1>Plots</h1>
+
+    <!-- Use figure container to display graphs side-by-side  -->
+    <div class="figure-container">
+        <figure>
+            <figcaption>Accuracy Curve</figcaption>
+            <img src="{{ url_for('static', filename='metrics/plots/accuracy_curve.png') }}" alt="Accuracy Curve" width="450" height="400">
+        </figure>
+
+        <figure>
+            <figcaption>Loss Curve</figcaption>
+            <img src ="{{ url_for('static', filename='metrics/plots/loss_curve.png') }}" alt ="Loss Curve" width="450" height="400">
+        </figure>
+    </div>
+</div>
 
 
 <!-- Model metrics from csv-->
 <script>
-
 function CSVToTable(csvURL, tableId) 
 {
     Papa.parse(csvURL,
@@ -77,20 +79,23 @@ function CSVToTable(csvURL, tableId)
 }
 </script>
 
-<div class="figure-container">
-    <figure>
-        <figcaption>Accuracy by Class</figcaption>
-        <table id="class_acc"></table>
-    </figure>
 
-    <figure>
-        <figcaption>Training Metrics</figcaption>
-        <table id ="train_metrics"></table>
-    </figure>
+<div class="section-card">
+    <h1>Tables</h1>
+    <div class="figure-container">
+        <figure>
+            <figcaption>Accuracy by Class</figcaption>
+            <table id="class_acc"></table>
+        </figure>
+
+        <figure>
+            <figcaption>Training Metrics</figcaption>
+            <table id ="train_metrics"></table>
+        </figure>
 
 
+    </div>
 </div>
-
 <script>
     CSVToTable(
         "{{  url_for('static', filename='metrics/tables/per_class_accuracy.csv')  }}", 

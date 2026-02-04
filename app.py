@@ -84,7 +84,7 @@ def model_info():
 
 @app.route("/")
 def home():
-    return render_template("index.html")
+    return render_template("home.html")
 
 
 
@@ -97,7 +97,7 @@ Takes user uploaded image and returns the model's predicted class in a json
 
 returns: json file with model prediction and confidence
 """
-@app.route("/predict", methods=["POST"])
+@app.route("/predict", methods=['GET', 'POST'])
 def predict():
     try:
         if 'file' not in request.files:
@@ -109,15 +109,9 @@ def predict():
         if not file.mimetype.startswith("image/"):
             return jsonify({"error": "Invalid image type"}), 400
 
-        # Converting image to RGB
-        try:
-            image = Image.open(io.BytesIO(file.read())).convert("RGB")
-        except Exception as e:
-            return jsonify({"error": "Cannot Process image", "details": str(e)}), 400
-
-        # Transform user image
+        image = Image.open(file).convert("RGB")
         input_tensor = transform(image).unsqueeze(0).to(device)
-
+        
         # Make a prediction
         model.eval()
         with torch.no_grad():
@@ -129,6 +123,7 @@ def predict():
         return jsonify({
             "prediction": checkpoint["classes"][pred.item()],
             "confidence": float(confidence.item())
+           
         })
 
     except Exception as e:

@@ -1,6 +1,72 @@
-<h2> Upload Fruit Image</h2> <!-- Page header -->
+<link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
 
-<form action="/predict" method="post" enctype="multipart/form-data">
-    <input type="file" name = "file">
-    <button type="submit">Predict</button>
-</form>
+
+<div class="section-card">
+    <h1>Model Predictions</h1>
+    <a href="/">Home</a> 
+    <a href="/metrics">Model Metrics</a>
+    <a href="https://github.com/grantmajor/fruitclassifier", target="_blank">Link to GitHub Repository</a>
+</div>
+
+
+<script> 
+    function RetrievePred()
+    {
+        const fileInput = document.getElementById('fileInput');
+        const formData = new FormData();
+        formData.append('file', fileInput.files[0]);
+
+        fetch('/predict',
+        {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => 
+        {
+            if (!response.ok) throw new Error('HTTP error! status: ${response.status}' );
+            return response.json();
+        })
+        .then(data =>
+        {
+            console.log('JSON Response:', data);
+
+            document.getElementById("result").innerHTML = `
+                <p>Prediction: ${data.prediction}</p>
+                <p>Confidence: ${(data.confidence * 100).toFixed(2)}%</p>
+                `;
+        })
+        .catch(error =>
+        {
+            console.error('Error', error);
+        });
+    }
+</script>
+
+
+
+<div class="section-card prediction-card">
+    <h3>Upload Image</h3>
+
+    <div class="upload-controls">
+        <input type="file" id="fileInput" name="file">
+        <button type="submit" onclick="RetrievePred()">Predict</button>
+    </div>
+
+        <img id="preview">
+
+    <div id="result"></div>
+</div>
+
+
+<script>
+    fileInput.onchange = () =>
+    {
+        const file = fileInput.files[0];
+        if(file)
+        {
+            document.getElementById("preview").src = URL.createObjectURL(file);
+            document.getElementById("preview").style.display="inline";
+        }
+    }
+
+</script>

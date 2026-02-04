@@ -1,0 +1,98 @@
+<link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+
+<!-- MathJax import and intialization-->
+<script>
+  window.MathJax = {
+    tex: {
+      inlineMath: [['$', '$']],
+      displayMath: [['$$', '$$']],
+      packages: {'[+]': ['html']}
+    },
+    loader: {load: ['[tex]/html']}
+  };
+</script>   
+
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>   
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+
+    var coll = document.getElementsByClassName("collapsible");
+
+    for (let i = 0; i < coll.length; i++) {
+        coll[i].addEventListener("click", function () {
+
+            this.classList.toggle("active");
+            var content = this.nextElementSibling;
+
+            if (content.style.display === "block") {
+                content.style.display = "none";
+            } else {
+                content.style.display = "block";
+            }
+
+        });
+    }
+
+});
+</script>
+
+
+<div class="section-card">
+
+    <h1 style="display: inline;">Fruit Classifier</h1>
+    <p>Grant Major</p>
+    <a href="/predict_ui">Make Prediction</a> <a href="/metrics">Model Metrics</a> <a href="https://github.com/grantmajor/fruitclassifier" target="_blank">
+        Link to GitHub Repository
+    </a>
+
+</div>
+
+
+
+<div class="section-card"> 
+    <h2 style="text-align: left;">CNN Overview</h2>
+        <p style="text-indent: 30px;">
+            Fruit Classifier is a 5-layer Convolutional Neural Network trained on the 
+            <a href="https://www.kaggle.com/datasets/moltean/fruitsFruits-360"> Fruits-360 dataset.</a>
+            PyTorch was used to define a simple CNN that features 5 convolutional layers; the first layer
+            begins by taking in 3 input channels corresponding to an image's RGB tensors and outputting 32 channels. From here,
+            the convolutional layers behave identically. Following the convolutional step, Batch Norm, ReLU, and Max Pooling are applied
+            to the output channels. Following the convolutional layers is a dropout layer with $p=0.25$. After dropout, we apply
+            Adaptive Average Pooling in place of a flatten layer. Finally, we apply a second dropout layer with $p=0.5$ before
+            applying a fully connected layer, ending the forward pass loop. <br>
+
+</div>
+
+<h2 style="text-align: left;">Model Specifics</h2>
+<button type="button" id="data" class="collapsible">Data Augmentation</button>
+<div class="content" id="data">
+    <p>
+        Mimicking common data augmentation practices to improve generalization and reduce overfitting, we apply a series of transformations
+        to each training image. First we resize the image to 64x64, followed by randomly flipping approximately 50% of images
+        along the horizontal axis. Next, we apply a random rotation transformation that rotates each training image approximately 0-10 degrees. Finally,
+        we apply a color jitter transformation that slightly alters the brightness, contrast, and saturation of the images to simulate variability
+        in lighting conditions. After these transformations are complete, we turn the image into a 3 channel tensor and send it to the CNN.
+    </p>
+</div>
+
+<button type="button" id="train" class="collapsible">Training</button>
+<div class="content" id="train">
+    <p>
+        The CNN was trained using a cross-entropy loss function with label smoothing applied. AdamW was selected as the optimizer due to its 
+        quick convergence and wide-spread adoption throughout the deep learning community. A learning rate of $0.001$ was selected and a cosine
+        annealing scheduler was used to improve convergence rate and generalization. Fruit Classifier was trained for 50 total epochs
+        with a patience of 6; its lowest loss was seen at epoch 47. The model took approximately 1 hour and 45 minutes to train on an NVIDIA GTX 1080 
+        with a total of 1,636,737 parameters.
+    </p>
+
+</div>
+<button type="button" id="val" class="collapsible">Validation</button>
+<div class="content" id="val">
+    <p>
+        The validation loop was fairly standard, with multiple variables being used to track relevant metrics like macro-f1, per-class accuracy, top-k accuracy, and loss. 
+        These variables allowed the creation of the plots seen on the Model Metrics page. A confusion matrix was also generated, however, due to the large number of classes,
+        its effectiveness is minimized.
+    </p>
+
+</div>
