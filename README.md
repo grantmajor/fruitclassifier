@@ -22,9 +22,7 @@ Fruit Classifier is a convolutional neural network (CNN) trained on the [fruits-
 
 <details>
   <summary>Backend & Frontend</summary> 
-  To allow for users to easily interact with the CNN, a front-end and back-end were created using HTML/CSS/JavaScript and Flask respectively.
-
-  The back-end loads the model checkpoint from the project folder and creates a new FruitCNN object. Three unique webpages were created, with the predictions webpage featuring two separate routes. Upon running the application, the user is brought to a landing page that features a navigation bar to allow for swapping between webpages. After swapping to a different webpage, the corresponding HTML template is returned from Flask which, in turn, displays the new webpage. 
+  To allow for users to easily interact with the CNN, a front-end and back-end were created using HTML/CSS/JavaScript and Flask respectively. The back-end loads the model checkpoint from the project folder and creates a new FruitCNN object. Three unique webpages were created, with the predictions webpage featuring two separate routes. Upon running the application, the user is brought to a landing page that features a navigation bar to allow for swapping between webpages. After swapping to a different webpage, the corresponding HTML template is returned from Flask which, in turn, displays the new webpage. 
   The front-end is a typical implementation of HTML/CSS/JavaScript for a Flask API. A CSS file is used to improve webpage aesthetics. 
 </details>   
 
