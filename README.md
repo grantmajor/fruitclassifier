@@ -29,35 +29,26 @@ Fruit Classifier is a convolutional neural network (CNN) trained on the [fruits-
 
 ## Getting Started
 
-### Dependencies
-
-
 ### Installing
-
+First, clone the repository using Git
+```
+git clone https://github.com/grantmajor/fruitclassifier.git
+```
+Now, download the necessary libraries using Python's pip command.
+```
+pip install -r requirements.txt
+```
 
 ### Executing program
-
+We can execute the program using the app.py file:
 ```
-code blocks for commands
-```
-
-## Help
-
-```
-command to run if program contains helper info
+python app.py
 ```
 
 ## Authors
 
+Grant Major
 
-## Version History
-
-
-## License
-
-This project is licensed under the [NAME HERE] License - see the LICENSE.md file for details
-
-## Acknowledgments
 
 Inspiration, code snippets, etc.
 * [awesome-readme](https://github.com/matiassingers/awesome-readme)
