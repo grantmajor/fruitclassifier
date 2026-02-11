@@ -2,6 +2,8 @@
 
 Fruit Classifier is a convolutional neural network (CNN) trained on the [fruits-360](https://www.kaggle.com/datasets/moltean/fruits) dataset.
 
+Docker Repo: https://hub.docker.com/repository/docker/grantmajor/fruitclassifier/general
+
 ## Project Specifics
 
 <details>
